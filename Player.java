@@ -25,16 +25,20 @@ public class Player {
     }
 
     // Draws the player
-    public void drawMe(GraphicsContext gc) {
-        gc.setFill(Color.RED);
+    public abstract void drawMe(GraphicsContext gc)
+    {
+        gc.setFill(Color.BLUE);
         gc.fillRect(x, y, size, size);
     }
 
+    // Allows the class to do their action
+    public abstract void doThing(GraphicsContext gc);
+
     // Getters and setters
-    public int getSize() { return size; }
-    public int getX() { return x; }
-    public int getY() { return y; }
-    public void setX(int x) { this.x = x; }
-    public void setY(int y) { this.y = y; }
-    public void setSize(int size) { this.size = size; }
+    public abstract int getSize() { return size; }
+    public abstract int getX() { return x; }
+    public abstract int getY() { return y; }
+    public abstract void setX(int x) { this.x = x; }
+    public abstract void setY(int y) { this.y = y; }
+    public abstract void setSize(int size) { this.size = size; }
 }
