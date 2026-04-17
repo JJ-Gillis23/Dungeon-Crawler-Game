@@ -8,6 +8,10 @@ import javafx.event.*;
 import javafx.scene.canvas.*;
 import javafx.scene.input.*;
 import javafx.animation.*;
+import javafx.scene.image.Image;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.FontPosture; // optional (for italic)
 
 import java.util.*;
 
@@ -19,6 +23,8 @@ public class Main extends Application
    StackPane sp = new StackPane();
    Canvas theCanvas = new Canvas(1368,768);
    GraphicsContext gc = theCanvas.getGraphicsContext2D(); 
+   Image menuBackground = new Image("mainmenu.png");
+   Button startButton = new Button("Start Game");
 
    AnimationHandler ta = new AnimationHandler();
 
@@ -26,6 +32,7 @@ public class Main extends Application
    {
       sp.getChildren().add(theCanvas);
       sp.getChildren().add(menu);
+      sp.getChildren().add(startButton);
 
       menu.getItems().addAll("Save", "Load", "Reset", "Exit");
       menu.setOnAction(new ComboBoxListener());
@@ -33,7 +40,7 @@ public class Main extends Application
 
       Scene scene = new Scene(sp, 1368, 768);
       stage.setScene(scene);
-      stage.setTitle("Contraption Zac");
+      stage.setTitle("Dunegon Crawler");
 
       scene.setOnKeyPressed(new KeyListenerDown());
       scene.setOnKeyReleased(new KeyListenerUp());
@@ -49,13 +56,38 @@ public class Main extends Application
       gc.setFill(Color.BLACK);
       gc.fillRect(0,0,theCanvas.getWidth(),theCanvas.getHeight());   
    }
+   public void drawMenu()
+      {
+          gc.clearRect(0, 0, theCanvas.getWidth(), theCanvas.getHeight());
+      
+          // Draw the background image stretched to fit screen
+          gc.drawImage(menuBackground, 0, 0, theCanvas.getWidth(), theCanvas.getHeight());
+      
+            startButton.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+            startButton.setLayoutX(350);
+            startButton.setLayoutY(1000);
+
+            startButton.setOnAction(e -> {
+               System.out.println("Game Starting...");
+               startButton.setVisible(false);
+               start = true;
+               // call your game start method here
+            });
+      }
 
    public class AnimationHandler extends AnimationTimer
    {
       @Override
       public void handle(long now)
       {
-         drawBackground();
+         if(start == false)
+         {
+            drawMenu();
+         }
+         else
+         {  
+            drawBackground();
+         }
       }
    }
 
