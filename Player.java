@@ -1,44 +1,21 @@
 import javafx.scene.paint.*;
 import javafx.scene.canvas.*;
+import javafx.scene.text.Font;
+public abstract class Player {
+    protected int x, y, size; // protected so subclasses can access
 
-public class Player {
-    private int x;
-    private int y;
-    private int size;
-
-    // Single instance
-    private static Player instance = null;
-
-    // Private constructor
-    private Player() {
-        x = 0;
-        y = 0;
-        size = 25; // default size
+    public Player() {
+        x = 0; y = 0; size = 25;
     }
 
-    // Public method to access the singleton
-    public static Player getInstance() {
-        if (instance == null) {
-            instance = new Player();
-        }
-        return instance;
-    }
-
-    // Draws the player
-    public abstract void drawMe(GraphicsContext gc)
-    {
-        gc.setFill(Color.BLUE);
-        gc.fillRect(x, y, size, size);
-    }
-
-    // Allows the class to do their action
+    public abstract void drawMe(int x, int y, GraphicsContext gc);
     public abstract void doThing(GraphicsContext gc);
 
-    // Getters and setters
-    public abstract int getSize() { return size; }
-    public abstract int getX() { return x; }
-    public abstract int getY() { return y; }
-    public abstract void setX(int x) { this.x = x; }
-    public abstract void setY(int y) { this.y = y; }
-    public abstract void setSize(int size) { this.size = size; }
+    // Concrete getters/setters — no need to be abstract
+    public int getX() { return x; }
+    public int getY() { return y; }
+    public int getSize() { return size; }
+    public void setX(int x) { this.x = x; }
+    public void setY(int y) { this.y = y; }
+    public void setSize(int size) { this.size = size; }
 }

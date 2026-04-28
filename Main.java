@@ -17,7 +17,7 @@ import java.util.*;
 
 public class Main extends Application
 {
-   boolean start, up, down, left, right;
+   boolean start, up, down, left, right, action;
 
    ComboBox<String> menu = new ComboBox<>();
    StackPane sp = new StackPane();
@@ -25,15 +25,18 @@ public class Main extends Application
    GraphicsContext gc = theCanvas.getGraphicsContext2D(); 
    Image menuBackground = new Image("mainmenu.png");
    Button startButton = new Button("Start Game");
-
+   Archer player = new Archer();
    AnimationHandler ta = new AnimationHandler();
+   int arrowtimer = 0;
 
    public void start(Stage stage)
    {
+      player.setX(500);
+      player.setY(200);
+      player.setArrowCount(10);
       sp.getChildren().add(theCanvas);
       sp.getChildren().add(menu);
       sp.getChildren().add(startButton);
-
       menu.getItems().addAll("Save", "Load", "Reset", "Exit");
       menu.setOnAction(new ComboBoxListener());
       menu.setVisible(false);
@@ -68,7 +71,6 @@ public class Main extends Application
             startButton.setLayoutY(1000);
 
             startButton.setOnAction(e -> {
-               System.out.println("Game Starting...");
                startButton.setVisible(false);
                start = true;
                // call your game start method here
@@ -83,10 +85,19 @@ public class Main extends Application
          if(start == false)
          {
             drawMenu();
+            if(startButton.isVisible() == false)
+            {
+               startButton.setVisible(true);
+            }
          }
          else
          {  
             drawBackground();
+            player.drawMe(player.getX(), player.getY(), gc);
+            if (action || player.checkFlight()) {
+                player.doThing(gc);
+            }
+            
          }
       }
    }
@@ -114,6 +125,10 @@ public class Main extends Application
          if (event.getCode() == KeyCode.A) left = true;
          if (event.getCode() == KeyCode.S) down = true;
          if (event.getCode() == KeyCode.D) right = true;
+         if(event.getCode() == KeyCode.SPACE && !player.checkFlight() && !action)
+         {
+            action = true;
+         }
       }
    }
 
@@ -125,6 +140,10 @@ public class Main extends Application
          if (event.getCode() == KeyCode.A) left = false;
          if (event.getCode() == KeyCode.S) down = false;
          if (event.getCode() == KeyCode.D) right = false;
+         if(event.getCode() == KeyCode.SPACE) 
+         {
+            action = false;
+         }
       }
    }
 
