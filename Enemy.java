@@ -1,0 +1,99 @@
+import javafx.scene.paint.*;
+import javafx.scene.canvas.*;
+import javafx.scene.text.Font;
+import java.util.*;
+public class Enemy extends Player {
+    private int bulletcount;
+
+    
+    // Public constructor
+    public Enemy() {
+        super();
+        bulletcount = 100;
+    }
+
+   
+
+    // Getters and setters
+    @Override
+    public int getX() { return x; }
+
+    @Override
+    public int getY() { return y; }
+
+    @Override
+    public int getSize() { return size; }
+
+    @Override
+    public void setX(int x) { this.x = x; }
+
+    @Override
+    public void setY(int y) { this.y = y; }
+
+    @Override
+    public void setSize(int size) { this.size = size; }
+
+    // Draws the archer
+    @Override
+    public void drawMe(int x, int y, GraphicsContext gc) {
+        gc.setFill(Color.GREEN);
+        gc.fillRect(x, y, size, size);
+        gc.setFont(new Font("SansSerif",12));
+        gc.setFill(Color.WHITE);
+        gc.fillText("Bullets: " + bulletcount, getX(), getY() - 5);
+    }
+
+    // Archery action
+private int arrowX = -1; // -1 means no arrow in flight
+private int arrowY = -1;
+private boolean shouldShoot = false;
+private List<int[]> bullets = new ArrayList<>(); // each int[] is {x, y}
+
+@Override
+public void doThing(GraphicsContext gc) {
+    // Launch a new bullet if triggered
+    if (bulletcount > 0 && shouldShoot) {
+        bullets.add(new int[]{getX(), getY() + getSize() / 2}); // spawn at left edge of enemy
+        bulletcount--;
+        shouldShoot = false;
+    }
+
+    // Move and draw all bullets every frame
+    Iterator<int[]> it = bullets.iterator();
+    while (it.hasNext()) {
+        int[] bullet = it.next();
+        bullet[0] -= 15; // move LEFT instead of right
+
+        int ax = bullet[0];
+        int ay = bullet[1];
+
+        // Bullet body (small rectangle)
+        gc.setFill(Color.YELLOW);
+        gc.fillRect(ax, ay - 4, 16, 8); // wide rectangle for bullet body
+
+        // Bullet tip (triangle pointing LEFT)
+        gc.setFill(Color.ORANGE);
+        double[] tipX = {ax, ax - 10, ax};
+        double[] tipY = {ay - 4, ay, ay + 4};
+        gc.fillPolygon(tipX, tipY, 3);
+
+        // Bullet casing rim (right edge detail)
+        gc.setStroke(Color.DARKGRAY);
+        gc.setLineWidth(2);
+        gc.strokeLine(ax + 16, ay - 4, ax + 16, ay + 4);
+
+        // Remove when off the left edge of screen
+        if (bullet[0] < -20) {
+            it.remove();
+        }
+    }
+}
+
+
+
+    // Bullet getters/setters
+    public int getBulletCount() { return bulletcount; }
+    public void setBulletCount(int bulletcount) { this.bulletcount = bulletcount; }
+    public void resetBullets() { this.bulletcount = 100; }
+    public void setShouldShoot(boolean b) { shouldShoot = b; }
+}

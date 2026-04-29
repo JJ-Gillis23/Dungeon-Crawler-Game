@@ -17,6 +17,10 @@ import java.util.*;
 public class Main extends Application
 {
    boolean up, down, left, right, action;
+   boolean enemycreator = true;
+   long lastEnemyShot = 0;
+   long lastWaveTime = 0;
+   int wave = 0;
    String gameState = "MAIN_MENU"; // MAIN_MENU, CLASS_MENU, GAME
 
    ComboBox<String> menu = new ComboBox<>();
@@ -28,6 +32,7 @@ public class Main extends Application
    Button archerButton = new Button("Archer Class");
    Button ninjaButton = new Button("Ninja Class");
    Player player = null;
+   ArrayList<Enemy> enemies = new ArrayList<>();
    AnimationHandler ta = new AnimationHandler();
 
    public void start(Stage stage)
@@ -37,50 +42,53 @@ public class Main extends Application
       sp.getChildren().add(startButton);
       sp.getChildren().add(archerButton);
       sp.getChildren().add(ninjaButton);
-
+   
       menu.getItems().addAll("Save", "Load", "Reset", "Exit");
       menu.setOnAction(new ComboBoxListener());
       menu.setVisible(false);
       archerButton.setVisible(false);
       ninjaButton.setVisible(false);
       
-
+   
       // Start button goes to class menu
-      startButton.setOnAction(e -> {
-         gameState = "CLASS_MENU";
-         startButton.setVisible(false);
-      });
-
+      startButton.setOnAction(
+         e -> {
+            gameState = "CLASS_MENU";
+            startButton.setVisible(false);
+         });
+   
       // Archer button starts the game
-      archerButton.setOnAction(e -> {
-         player = new Archer();
-         player.setX(500);
-         player.setY(200);
-         gameState = "GAME";
-         archerButton.setVisible(false);
-         ninjaButton.setVisible(false);
-      });
+      archerButton.setOnAction(
+         e -> {
+            player = new Archer();
+            player.setX(500);
+            player.setY(200);
+            gameState = "GAME";
+            archerButton.setVisible(false);
+            ninjaButton.setVisible(false);
+         });
       //Ninja button starts the game
-      ninjaButton.setOnAction(e -> {
-         player = new Ninja();
-         player.setX(500);
-         player.setY(200);
-         gameState = "GAME";
-         ninjaButton.setVisible(false);
-         archerButton.setVisible(false);
-      });
+      ninjaButton.setOnAction(
+         e -> {
+            player = new Ninja();
+            player.setX(500);
+            player.setY(200);
+            gameState = "GAME";
+            ninjaButton.setVisible(false);
+            archerButton.setVisible(false);
+         });
       
-
+   
       Scene scene = new Scene(sp, 1368, 768);
       stage.setScene(scene);
       stage.setTitle("Dungeon Crawler");
-
+   
       scene.setOnKeyPressed(new KeyListenerDown());
       scene.setOnKeyReleased(new KeyListenerUp());
-
+   
       stage.show();
       sp.requestFocus();
-
+   
       ta.start();
    } 
 
@@ -88,12 +96,12 @@ public class Main extends Application
    {
       gc.clearRect(0, 0, theCanvas.getWidth(), theCanvas.getHeight());
       gc.drawImage(menuBackground, 0, 0, theCanvas.getWidth(), theCanvas.getHeight());
-
+   
       if (!startButton.isVisible())
       {
          startButton.setVisible(true);
       }
-
+   
       startButton.setFont(Font.font("Arial", FontWeight.BOLD, 24));
       
    }
@@ -164,8 +172,8 @@ public class Main extends Application
       gc.setFill(Color.SILVER);
       gc.fillOval(-4, -4, 8, 8);
       gc.restore();
-
-
+   
+   
       if (!archerButton.isVisible())
       {
          archerButton.setVisible(true);
@@ -174,14 +182,14 @@ public class Main extends Application
       {
          ninjaButton.setVisible(true);
       }
-
-         archerButton.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-         archerButton.setTranslateX(-180); // negative = left, positive = right
-         archerButton.setTranslateY(100);    // negative = up, positive = down
-         ninjaButton.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-         ninjaButton.setTranslateX(200); // negative = left, positive = right
-         ninjaButton.setTranslateY(100);    // negative = up, positive = down         
-      }
+   
+      archerButton.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+      archerButton.setTranslateX(-180); // negative = left, positive = right
+      archerButton.setTranslateY(100);    // negative = up, positive = down
+      ninjaButton.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+      ninjaButton.setTranslateX(200); // negative = left, positive = right
+      ninjaButton.setTranslateY(100);    // negative = up, positive = down         
+   }
 
    public void drawBackground()
    {
@@ -208,21 +216,29 @@ public class Main extends Application
             if (player != null)
             {
                player.drawMe(player.getX(), player.getY(), gc);
-
+            
                if (action)
                {
                   player.setShouldShoot(true);
                   action = false;
                }
-
+            
                player.doThing(gc);
-
+            
                if (up)    player.setY(player.getY() - 5);
                if (down)  player.setY(player.getY() + 5);
                if (left)  player.setX(player.getX() - 5);
                if (right) player.setX(player.getX() + 5);
             }
+            if (enemycreator)
+            {
+               createEnemies();
+            }
+            drawEnemyWaves();
+            enemyShooting(now);
+            handleWave(now);
          }
+           
       }
    }
 
@@ -243,7 +259,7 @@ public class Main extends Application
                menu.requestFocus();
             }
          }
-
+      
          if (event.getCode() == KeyCode.W) up = true;
          if (event.getCode() == KeyCode.A) left = true;
          if (event.getCode() == KeyCode.S) down = true;
@@ -264,12 +280,129 @@ public class Main extends Application
       }
    }
 
-   public Color parseColor(String colorString) {
-      try {
-         return Color.web(colorString);
-      } catch (IllegalArgumentException e) {
-         return Color.BLACK;
+   public void createEnemies()
+   {
+      for (int i = 0; i < 21; i++) {
+         Enemy e = new Enemy();
+         if(i < 7)
+         {
+            e.setX(1000);
+            e.setY(100 + i * 100);
+            enemies.add(e);            
+         }
+         else if(i > 6 && i < 14)
+         {
+            e.setX(1100);
+            e.setY(100 + (i-7) * 100);
+            enemies.add(e);
+         }
+         else if(i > 13)
+         {
+            e.setX(1200);
+            e.setY(100 + (i-14) * 100);
+            enemies.add(e);
+         }
       }
+      enemycreator = false;
+   }
+   public void drawEnemyWaves()
+   {
+      if(wave == 1)
+      {
+         for (int i = 0; i < 7; i++) 
+         {
+            enemies.get(i).drawMe(enemies.get(i).getX(), enemies.get(i).getY(), gc); 
+         }
+      }
+      else if(wave == 2)
+      {
+         for (int i = 0; i < 14; i++) 
+         {
+            enemies.get(i).drawMe(enemies.get(i).getX(), enemies.get(i).getY(), gc); 
+         }
+      
+      }   
+      else if (wave == 3)
+      {
+         for (int i = 0; i < enemies.size(); i++) 
+         {
+            enemies.get(i).drawMe(enemies.get(i).getX(), enemies.get(i).getY(), gc); 
+         }      
+      
+      }  
+   
+   }
+   public void enemyShooting(long now)
+   {
+            if(wave == 1)
+            {
+               for (int i = 0; i < 7; i++) 
+               {
+                   // Only shoot every 5 seconds
+                  if (now - lastEnemyShot >= 3_000_000_000L) {
+                     enemies.get(i).setShouldShoot(true);
+                  } 
+                  enemies.get(i).doThing(gc);
+               }
+            
+            // Reset the timer after all enemies have been told to shoot
+               if (now - lastEnemyShot >= 3_000_000_000L) {
+                  lastEnemyShot = now;
+               }
+            
+            } 
+            if(wave == 2)
+            {
+               for (int i = 0; i < 14; i++) 
+               {
+                   // Only shoot every 5 seconds
+                  if (now - lastEnemyShot >= 3_000_000_000L) {
+                     enemies.get(i).setShouldShoot(true);
+                  } 
+                  enemies.get(i).doThing(gc);
+               }
+            
+            // Reset the timer after all enemies have been told to shoot
+               if (now - lastEnemyShot >= 3_000_000_000L) {
+                  lastEnemyShot = now;
+               }
+            
+            }  
+            if(wave == 3)
+            {
+               for (int i = 0; i < enemies.size(); i++) 
+               {
+                   // Only shoot every 5 seconds
+                  if (now - lastEnemyShot >= 3_000_000_000L) {
+                     enemies.get(i).setShouldShoot(true);
+                  } 
+                  enemies.get(i).doThing(gc);
+               }
+            
+            // Reset the timer after all enemies have been told to shoot
+               if (now - lastEnemyShot >= 3_000_000_000L) {
+                  lastEnemyShot = now;
+               }
+            
+            }               
+   
+   
+   
+   
+   }
+   public void handleWave(long now) {
+       if (now - lastWaveTime >= 7_000_000_000L) {
+           if(wave == 3)
+           {
+           
+           }
+           else
+           {
+           wave++;
+           }
+           lastWaveTime = now;
+           System.out.println("Wave: " + wave); // remove once you have UI for it
+       }
    }
 
    public class ComboBoxListener implements EventHandler<ActionEvent>
