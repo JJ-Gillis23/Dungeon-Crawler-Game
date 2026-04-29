@@ -11,13 +11,13 @@ import javafx.animation.*;
 import javafx.scene.image.Image;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import javafx.scene.text.FontPosture; // optional (for italic)
 
 import java.util.*;
 
 public class Main extends Application
 {
-   boolean start, up, down, left, right, action;
+   boolean up, down, left, right, action;
+   String gameState = "MAIN_MENU"; // MAIN_MENU, CLASS_MENU, GAME
 
    ComboBox<String> menu = new ComboBox<>();
    StackPane sp = new StackPane();
@@ -25,25 +25,55 @@ public class Main extends Application
    GraphicsContext gc = theCanvas.getGraphicsContext2D(); 
    Image menuBackground = new Image("mainmenu.png");
    Button startButton = new Button("Start Game");
-   Archer player = new Archer();
+   Button archerButton = new Button("Archer Class");
+   Button ninjaButton = new Button("Ninja Class");
+   Player player = null;
    AnimationHandler ta = new AnimationHandler();
-   int arrowtimer = 0;
 
    public void start(Stage stage)
    {
-      player.setX(500);
-      player.setY(200);
-      player.setArrowCount(10);
       sp.getChildren().add(theCanvas);
       sp.getChildren().add(menu);
       sp.getChildren().add(startButton);
+      sp.getChildren().add(archerButton);
+      sp.getChildren().add(ninjaButton);
+
       menu.getItems().addAll("Save", "Load", "Reset", "Exit");
       menu.setOnAction(new ComboBoxListener());
       menu.setVisible(false);
+      archerButton.setVisible(false);
+      ninjaButton.setVisible(false);
+      
+
+      // Start button goes to class menu
+      startButton.setOnAction(e -> {
+         gameState = "CLASS_MENU";
+         startButton.setVisible(false);
+      });
+
+      // Archer button starts the game
+      archerButton.setOnAction(e -> {
+         player = new Archer();
+         player.setX(500);
+         player.setY(200);
+         gameState = "GAME";
+         archerButton.setVisible(false);
+         ninjaButton.setVisible(false);
+      });
+      //Ninja button starts the game
+      ninjaButton.setOnAction(e -> {
+         player = new Ninja();
+         player.setX(500);
+         player.setY(200);
+         gameState = "GAME";
+         ninjaButton.setVisible(false);
+         archerButton.setVisible(false);
+      });
+      
 
       Scene scene = new Scene(sp, 1368, 768);
       stage.setScene(scene);
-      stage.setTitle("Dunegon Crawler");
+      stage.setTitle("Dungeon Crawler");
 
       scene.setOnKeyPressed(new KeyListenerDown());
       scene.setOnKeyReleased(new KeyListenerUp());
@@ -54,50 +84,144 @@ public class Main extends Application
       ta.start();
    } 
 
+   public void drawMainMenu()
+   {
+      gc.clearRect(0, 0, theCanvas.getWidth(), theCanvas.getHeight());
+      gc.drawImage(menuBackground, 0, 0, theCanvas.getWidth(), theCanvas.getHeight());
+
+      if (!startButton.isVisible())
+      {
+         startButton.setVisible(true);
+      }
+
+      startButton.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+      
+   }
+
+   public void drawClassMenu()
+   {
+      gc.clearRect(0, 0, theCanvas.getWidth(), theCanvas.getHeight());
+      gc.setFill(Color.BLACK);
+      gc.fillRect(0, 0, theCanvas.getWidth(), theCanvas.getHeight());
+      gc.setFill(Color.WHITE);
+      gc.setFont(Font.font("Arial", FontWeight.BOLD, 36));
+      gc.fillText("Choose Your Class", 530, 200);
+      gc.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+      gc.setFill(Color.CYAN);
+      gc.fillText("- Given 100 arrows to",400,300);
+      gc.fillText("take down your enemies",400,320);
+      gc.fillText("- Can upgrade to shoot",400,370);
+      gc.fillText("multiple arrows at once",400,390);
+      gc.setFill(Color.CYAN);
+      gc.fillText("- Given 100 shurikens to",780,300);
+      gc.fillText("take down your enemies",780,320);
+      gc.fillText("- Can upgrade to shoot",780,370);
+      gc.fillText("multiple shurikens at once",780,390);
+      // Draw a decorative arrow on the class menu
+      int ax = 470; // adjust X position to match your button
+      int ay = 435;  // adjust Y position to match your button
+      
+      // Arrow shaft
+      gc.setStroke(Color.BROWN);
+      gc.setLineWidth(4);
+      gc.strokeLine(ax, ay, ax + 60, ay);
+      
+      // Arrow tip (triangle)
+      gc.setFill(Color.DARKGRAY);
+      double[] tipX = {ax + 60, ax + 80, ax + 60};
+      double[] tipY = {ay - 8, ay, ay + 8};
+      gc.fillPolygon(tipX, tipY, 3);
+      
+      // Arrow tail/fletching
+      gc.setStroke(Color.RED);
+      gc.setLineWidth(2);
+      gc.strokeLine(ax, ay, ax - 10, ay - 8);
+      gc.strokeLine(ax, ay, ax - 10, ay + 8);
+      //Draw a decorative shuriken on the class menu
+      int sx = 885; // adjust X position to match your button
+      int sy = 435;  // adjust Y position to match your button
+      gc.save();
+      gc.translate(sx, sy);
+      gc.rotate(45);
+      // Top blade
+      gc.setFill(Color.DARKGRAY);
+      double[] blade1X = {0, -6, 6};
+      double[] blade1Y = {-14, 0, 0};
+      gc.fillPolygon(blade1X, blade1Y, 3);
+      // Bottom blade
+      double[] blade2X = {0, -6, 6};
+      double[] blade2Y = {14, 0, 0};
+      gc.fillPolygon(blade2X, blade2Y, 3);
+      // Left blade
+      double[] blade3X = {-14, 0, 0};
+      double[] blade3Y = {0, -6, 6};
+      gc.fillPolygon(blade3X, blade3Y, 3);
+      // Right blade
+      double[] blade4X = {14, 0, 0};
+      double[] blade4Y = {0, -6, 6};
+      gc.fillPolygon(blade4X, blade4Y, 3);
+      // Center circle
+      gc.setFill(Color.SILVER);
+      gc.fillOval(-4, -4, 8, 8);
+      gc.restore();
+
+
+      if (!archerButton.isVisible())
+      {
+         archerButton.setVisible(true);
+      }
+      if (!ninjaButton.isVisible())
+      {
+         ninjaButton.setVisible(true);
+      }
+
+         archerButton.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+         archerButton.setTranslateX(-180); // negative = left, positive = right
+         archerButton.setTranslateY(100);    // negative = up, positive = down
+         ninjaButton.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+         ninjaButton.setTranslateX(200); // negative = left, positive = right
+         ninjaButton.setTranslateY(100);    // negative = up, positive = down         
+      }
+
    public void drawBackground()
    {
       gc.setFill(Color.BLACK);
-      gc.fillRect(0,0,theCanvas.getWidth(),theCanvas.getHeight());   
+      gc.fillRect(0, 0, theCanvas.getWidth(), theCanvas.getHeight());   
    }
-   public void drawMenu()
-      {
-          gc.clearRect(0, 0, theCanvas.getWidth(), theCanvas.getHeight());
-      
-          // Draw the background image stretched to fit screen
-          gc.drawImage(menuBackground, 0, 0, theCanvas.getWidth(), theCanvas.getHeight());
-      
-            startButton.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-            startButton.setLayoutX(350);
-            startButton.setLayoutY(1000);
-
-            startButton.setOnAction(e -> {
-               startButton.setVisible(false);
-               start = true;
-               // call your game start method here
-            });
-      }
 
    public class AnimationHandler extends AnimationTimer
    {
       @Override
       public void handle(long now)
       {
-         if(start == false)
+         if (gameState.equals("MAIN_MENU"))
          {
-            drawMenu();
-            if(startButton.isVisible() == false)
-            {
-               startButton.setVisible(true);
-            }
+            drawMainMenu();
          }
-         else
-         {  
+         else if (gameState.equals("CLASS_MENU"))
+         {
+            drawClassMenu();
+         }
+         else if (gameState.equals("GAME"))
+         {
             drawBackground();
-            player.drawMe(player.getX(), player.getY(), gc);
-            if (action || player.checkFlight()) {
-                player.doThing(gc);
+            if (player != null)
+            {
+               player.drawMe(player.getX(), player.getY(), gc);
+
+               if (action)
+               {
+                  player.setShouldShoot(true);
+                  action = false;
+               }
+
+               player.doThing(gc);
+
+               if (up)    player.setY(player.getY() - 5);
+               if (down)  player.setY(player.getY() + 5);
+               if (left)  player.setX(player.getX() - 5);
+               if (right) player.setX(player.getX() + 5);
             }
-            
          }
       }
    }
@@ -120,15 +244,11 @@ public class Main extends Application
             }
          }
 
-         if (event.getCode() == KeyCode.H) start = true;
          if (event.getCode() == KeyCode.W) up = true;
          if (event.getCode() == KeyCode.A) left = true;
          if (event.getCode() == KeyCode.S) down = true;
          if (event.getCode() == KeyCode.D) right = true;
-         if(event.getCode() == KeyCode.SPACE && !player.checkFlight() && !action)
-         {
-            action = true;
-         }
+         if (event.getCode() == KeyCode.SPACE) action = true;
       }
    }
 
@@ -140,10 +260,7 @@ public class Main extends Application
          if (event.getCode() == KeyCode.A) left = false;
          if (event.getCode() == KeyCode.S) down = false;
          if (event.getCode() == KeyCode.D) right = false;
-         if(event.getCode() == KeyCode.SPACE) 
-         {
-            action = false;
-         }
+         if (event.getCode() == KeyCode.SPACE) action = false;
       }
    }
 
@@ -159,30 +276,29 @@ public class Main extends Application
    {
       public void handle(ActionEvent e)
       {
-         if(menu.getValue() == null)
+         if (menu.getValue() == null)
          {
             menu.setValue("Menu");
             return;
          }
-
+         sp.requestFocus();
          switch(menu.getValue())
          {
             case "Save":
-               // TODO: implement save logic
                break;
-
             case "Load":
-               // TODO: implement load logic
                break;
-
             case "Reset":
-               // TODO: implement reset logic
+               gameState = "MAIN_MENU";
                break;
-
             case "Exit":
                System.exit(0);
                break;
          }
+         menu.setVisible(false);
+         archerButton.setVisible(false);
+         ninjaButton.setVisible(false);
+         sp.requestFocus();
       }
    }
 }

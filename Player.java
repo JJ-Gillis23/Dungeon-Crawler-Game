@@ -10,6 +10,7 @@ public abstract class Player {
 
     public abstract void drawMe(int x, int y, GraphicsContext gc);
     public abstract void doThing(GraphicsContext gc);
+    public abstract void setShouldShoot(boolean b);
 
     // Concrete getters/setters — no need to be abstract
     public int getX() { return x; }

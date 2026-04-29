@@ -1,7 +1,7 @@
 import javafx.scene.paint.*;
 import javafx.scene.canvas.*;
 import javafx.scene.text.Font;
-
+import java.util.*;
 public class Archer extends Player {
     private int arrowCount;
 
@@ -9,7 +9,7 @@ public class Archer extends Player {
     // Public constructor
     public Archer() {
         super();
-        arrowCount = 10;
+        arrowCount = 100;
     }
 
    
@@ -38,42 +38,63 @@ public class Archer extends Player {
     public void drawMe(int x, int y, GraphicsContext gc) {
         gc.setFill(Color.BLUE);
         gc.fillRect(x, y, size, size);
-        gc.setFont(new Font(12));
-        gc.setFill(Color.GREEN);
+        gc.setFont(new Font("SansSerif",12));
+        gc.setFill(Color.WHITE);
         gc.fillText("Arrows: " + arrowCount, getX(), getY() - 5);
     }
 
     // Archery action
 private int arrowX = -1; // -1 means no arrow in flight
 private int arrowY = -1;
-private boolean arrowFlying = false;
+private boolean shouldShoot = false;
+private List<int[]> arrows = new ArrayList<>(); // each int[] is {x, y}
 
 @Override
 public void doThing(GraphicsContext gc) {
-    // Only launch a new arrow if none is flying
-    if (!arrowFlying && arrowCount > 0) {
-        arrowX = getX() + getSize();
-        arrowY = getY() + getSize() / 2 - 5;
-        arrowFlying = true;
+    // Launch a new arrow if space was pressed
+    if (arrowCount > 0 && shouldShoot) {
+        arrows.add(new int[]{getX() + getSize(), getY() + getSize() / 2 - 5});
         arrowCount--;
+        shouldShoot = false;
     }
 
-    // Move and draw the arrow if it's in flight
-    if (arrowFlying) {
-        arrowX += 10; // speed — increase to go faster
-        gc.setFill(Color.YELLOW);
-        gc.fillOval(arrowX, arrowY, 10, 10);
+    // Move and draw all arrows every frame
+    Iterator<int[]> it = arrows.iterator();
+    while (it.hasNext()) {
+        int[] arrow = it.next();
+        arrow[0] += 15;
 
-        // Stop the arrow when it leaves the screen
-        if (arrowX >= 1350) {
-            arrowFlying = false;
+        int ax = arrow[0];
+        int ay = arrow[1];
+
+        // Arrow shaft
+        gc.setStroke(Color.BROWN);
+        gc.setLineWidth(2);
+        gc.strokeLine(ax, ay, ax + 20, ay);
+
+        // Arrow tip (triangle)
+        gc.setFill(Color.DARKGRAY);
+        double[] tipX = {ax + 20, ax + 30, ax + 20};
+        double[] tipY = {ay - 4, ay, ay + 4};
+        gc.fillPolygon(tipX, tipY, 3);
+
+        // Arrow tail/fletching
+        gc.setStroke(Color.RED);
+        gc.setLineWidth(1);
+        gc.strokeLine(ax, ay, ax - 5, ay - 4);
+        gc.strokeLine(ax, ay, ax - 5, ay + 4);
+
+        if (arrow[0] > 1368) {
+            it.remove();
         }
     }
 }
+
+
 
     // Arrow getters/setters
     public int getArrowCount() { return arrowCount; }
     public void setArrowCount(int arrowCount) { this.arrowCount = arrowCount; }
     public void resetArrows() { this.arrowCount = 10; }
-    public boolean checkFlight() {return arrowFlying;}
+    public void setShouldShoot(boolean b) { shouldShoot = b; }
 }
