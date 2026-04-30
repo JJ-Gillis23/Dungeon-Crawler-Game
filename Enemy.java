@@ -38,9 +38,6 @@ public class Enemy extends Player {
     public void drawMe(int x, int y, GraphicsContext gc) {
         gc.setFill(Color.GREEN);
         gc.fillRect(x, y, size, size);
-        gc.setFont(new Font("SansSerif",12));
-        gc.setFill(Color.WHITE);
-        gc.fillText("Bullets: " + bulletcount, getX(), getY() - 5);
     }
 
     // Archery action
@@ -88,7 +85,29 @@ public void doThing(GraphicsContext gc) {
         }
     }
 }
-
+public boolean checkCollisions(Player player) {
+    Iterator<int[]> it = bullets.iterator();
+    while (it.hasNext()) {
+        int[] bullet = it.next();
+        int ax = bullet[0];
+        int ay = bullet[1];
+        // Simple collision check: if bullet overlaps player rectangle
+        if (ax < player.getX() + player.getSize() &&
+            ax + 16 > player.getX() &&
+            ay - 4 < player.getY() + player.getSize() &&
+            ay + 4 > player.getY()) {
+            // Collision detected
+            System.out.println("Player hit!");
+            it.remove(); // Remove bullet on hit
+            return true; // Collision detected
+        }
+    }
+    return false; // No collision detected
+}
+public void move(Enemy enemy) {
+    // Move left by 1 pixel every frame
+    enemy.setX(enemy.getX() - 1);
+}
 
 
     // Bullet getters/setters

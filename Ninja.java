@@ -4,14 +4,12 @@ import javafx.scene.text.Font;
 import java.util.*;
 
 public class Ninja extends Player {
-    private int starCount;
     private boolean shouldShoot = false;
     private List<int[]> stars = new ArrayList<>();
 
     // Public constructor
     public Ninja() {
         super();
-        starCount = 10;
     }
 
     @Override
@@ -36,17 +34,14 @@ public class Ninja extends Player {
     public void drawMe(int x, int y, GraphicsContext gc) {
         gc.setFill(Color.RED);
         gc.fillRect(x, y, size, size);
-        gc.setFont(new Font("SansSerif", 12));
-        gc.setFill(Color.WHITE);
-        gc.fillText("Stars: " + starCount, getX(), getY() - 5);
+
     }
 
     @Override
     public void doThing(GraphicsContext gc) {
         // Launch a new shuriken if space was pressed
-        if (starCount > 0 && shouldShoot) {
+        if (shouldShoot) {
             stars.add(new int[]{getX() + getSize(), getY() + getSize() / 2 - 5, 0});
-            starCount--;
             shouldShoot = false;
         }
 
@@ -96,11 +91,24 @@ public class Ninja extends Player {
             }
         }
     }
+    public boolean checkCollisions(Player player)
+    {
+        Iterator<int[]> it = stars.iterator();
+        while (it.hasNext()) {
+            int[] star = it.next();
 
-    public int getStarCount() { return starCount; }
-    public void setStarCount(int starCount) { this.starCount = starCount; }
-    public void resetStars() { this.starCount = 10; }
+            if (star[0] + 15 >= player.getX() && 
+                star[0] <= player.getX() + player.getSize() &&
+                star[1] + 8 >= player.getY() && 
+                star[1] - 8 <= player.getY() + player.getSize()) {
+                it.remove();
+                return true;
+            }
+        }
+        return false;
+    }
 
+    // Shuriken shooting control
     @Override
     public void setShouldShoot(boolean b) { shouldShoot = b; }
 }

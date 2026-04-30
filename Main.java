@@ -18,9 +18,11 @@ public class Main extends Application
 {
    boolean up, down, left, right, action;
    boolean enemycreator = true;
-   long lastEnemyShot = 0;
+   boolean alive = true;
+   int wave = 1;
+   int level = 1;
    long lastWaveTime = 0;
-   int wave = 0;
+   long lastEnemyShot = 0;
    String gameState = "MAIN_MENU"; // MAIN_MENU, CLASS_MENU, GAME
 
    ComboBox<String> menu = new ComboBox<>();
@@ -31,6 +33,7 @@ public class Main extends Application
    Button startButton = new Button("Start Game");
    Button archerButton = new Button("Archer Class");
    Button ninjaButton = new Button("Ninja Class");
+   Button restartButton = new Button("Restart Game");
    Player player = null;
    ArrayList<Enemy> enemies = new ArrayList<>();
    AnimationHandler ta = new AnimationHandler();
@@ -42,12 +45,14 @@ public class Main extends Application
       sp.getChildren().add(startButton);
       sp.getChildren().add(archerButton);
       sp.getChildren().add(ninjaButton);
+      sp.getChildren().add(restartButton);
    
       menu.getItems().addAll("Save", "Load", "Reset", "Exit");
       menu.setOnAction(new ComboBoxListener());
       menu.setVisible(false);
       archerButton.setVisible(false);
       ninjaButton.setVisible(false);
+      restartButton.setVisible(false);
       
    
       // Start button goes to class menu
@@ -190,7 +195,54 @@ public class Main extends Application
       ninjaButton.setTranslateX(200); // negative = left, positive = right
       ninjaButton.setTranslateY(100);    // negative = up, positive = down         
    }
+   public void drawHud()
+   {
+      int barX = 10;
+      int barY = 50;
+      int barWidth = 200;
+      int barHeight = 20;
+      int borderThickness = 3;
 
+      // Level text
+      gc.setFill(Color.WHITE);
+      gc.setFont(Font.font("Orbitron", FontWeight.BOLD, 18));
+      gc.fillText("Level: " + level, 10, 40);
+
+      // White border
+      gc.setFill(Color.WHITE);
+      gc.fillRect(barX - borderThickness, barY - borderThickness, 
+                  barWidth + borderThickness * 2, barHeight + borderThickness * 2);
+
+      // Black background of bar
+      gc.setFill(Color.BLACK);
+      gc.fillRect(barX, barY, barWidth, barHeight);
+
+      // Red health fill — out of 100
+      gc.setFill(Color.RED);
+      if(player == null) return; // safety check
+      double healthPercent = player.getHealth() / 100.0;
+      gc.fillRect(barX, barY, (int)(barWidth * healthPercent), barHeight);
+   }
+   public void drawDeathScreen()
+   {
+      gc.clearRect(0, 0, theCanvas.getWidth(), theCanvas.getHeight());
+      gc.setFill(Color.BLACK);
+      gc.fillRect(0, 0, theCanvas.getWidth(), theCanvas.getHeight());
+      gc.setFill(Color.RED);
+      gc.setFont(Font.font("Orbitron", FontWeight.BOLD, 48));
+      gc.fillText("You Died!", 550, 300);
+      gc.setFont(Font.font("Orbitron", FontWeight.BOLD, 48));
+      gc.fillText("Restart and try again!", 530, 350);
+
+      restartButton.setVisible(true);
+      restartButton.setFont(Font.font("Orbitron", FontWeight.BOLD, 24));
+      restartButton.setTranslateX(0);   // centered horizontally
+      restartButton.setTranslateY(100); // slightly below center
+      restartButton.setOnAction(e -> {
+         gameState = "CLASS_MENU";
+         restartButton.setVisible(false);
+      });
+   }
    public void drawBackground()
    {
       gc.setFill(Color.BLACK);
@@ -213,9 +265,11 @@ public class Main extends Application
          else if (gameState.equals("GAME"))
          {
             drawBackground();
+            checkDeath();
             if (player != null)
             {
                player.drawMe(player.getX(), player.getY(), gc);
+               drawHud();
             
                if (action)
                {
@@ -229,14 +283,21 @@ public class Main extends Application
                if (down)  player.setY(player.getY() + 5);
                if (left)  player.setX(player.getX() - 5);
                if (right) player.setX(player.getX() + 5);
+
+               if (enemycreator)
+               {
+                  createEnemies();
+               }
+               handleWave(now);
+               drawEnemyWaves();
+               enemyShooting(now);
+               moveEnemies();
+               checkCollisions(player);
             }
-            if (enemycreator)
-            {
-               createEnemies();
-            }
-            drawEnemyWaves();
-            enemyShooting(now);
-            handleWave(now);
+         }
+         else if (gameState.equals("DEATH_SCREEN"))
+         {
+            drawDeathScreen();
          }
            
       }
@@ -280,130 +341,134 @@ public class Main extends Application
       }
    }
 
-   public void createEnemies()
-   {
-      for (int i = 0; i < 21; i++) {
-         Enemy e = new Enemy();
-         if(i < 7)
-         {
-            e.setX(1000);
-            e.setY(100 + i * 100);
-            enemies.add(e);            
-         }
-         else if(i > 6 && i < 14)
-         {
-            e.setX(1100);
-            e.setY(100 + (i-7) * 100);
+public void createEnemies()
+{
+    
+    int columns = getColumnsForWave(wave);
+    
+    for (int col = 0; col < columns; col++) {
+        for (int row = 0; row < 6; row++) {
+            Enemy e = new Enemy();
+            e.setX(1000 + col * 100);
+            e.setY(100 + row * 100);
+            e.setSize(50);
             enemies.add(e);
-         }
-         else if(i > 13)
-         {
-            e.setX(1200);
-            e.setY(100 + (i-14) * 100);
-            enemies.add(e);
-         }
-      }
-      enemycreator = false;
-   }
-   public void drawEnemyWaves()
-   {
-      if(wave == 1)
-      {
-         for (int i = 0; i < 7; i++) 
-         {
-            enemies.get(i).drawMe(enemies.get(i).getX(), enemies.get(i).getY(), gc); 
-         }
-      }
-      else if(wave == 2)
-      {
-         for (int i = 0; i < 14; i++) 
-         {
-            enemies.get(i).drawMe(enemies.get(i).getX(), enemies.get(i).getY(), gc); 
-         }
-      
-      }   
-      else if (wave == 3)
-      {
-         for (int i = 0; i < enemies.size(); i++) 
-         {
-            enemies.get(i).drawMe(enemies.get(i).getX(), enemies.get(i).getY(), gc); 
-         }      
-      
-      }  
-   
-   }
-   public void enemyShooting(long now)
-   {
-            if(wave == 1)
-            {
-               for (int i = 0; i < 7; i++) 
-               {
-                   // Only shoot every 5 seconds
-                  if (now - lastEnemyShot >= 3_000_000_000L) {
-                     enemies.get(i).setShouldShoot(true);
-                  } 
-                  enemies.get(i).doThing(gc);
-               }
-            
-            // Reset the timer after all enemies have been told to shoot
-               if (now - lastEnemyShot >= 3_000_000_000L) {
-                  lastEnemyShot = now;
-               }
-            
-            } 
-            if(wave == 2)
-            {
-               for (int i = 0; i < 14; i++) 
-               {
-                   // Only shoot every 5 seconds
-                  if (now - lastEnemyShot >= 3_000_000_000L) {
-                     enemies.get(i).setShouldShoot(true);
-                  } 
-                  enemies.get(i).doThing(gc);
-               }
-            
-            // Reset the timer after all enemies have been told to shoot
-               if (now - lastEnemyShot >= 3_000_000_000L) {
-                  lastEnemyShot = now;
-               }
-            
-            }  
-            if(wave == 3)
-            {
-               for (int i = 0; i < enemies.size(); i++) 
-               {
-                   // Only shoot every 5 seconds
-                  if (now - lastEnemyShot >= 3_000_000_000L) {
-                     enemies.get(i).setShouldShoot(true);
-                  } 
-                  enemies.get(i).doThing(gc);
-               }
-            
-            // Reset the timer after all enemies have been told to shoot
-               if (now - lastEnemyShot >= 3_000_000_000L) {
-                  lastEnemyShot = now;
-               }
-            
-            }               
-   
-   
-   
-   
-   }
-   public void handleWave(long now) {
-       if (now - lastWaveTime >= 7_000_000_000L) {
-           if(wave == 3)
-           {
-           
-           }
-           else
-           {
-           wave++;
-           }
-           lastWaveTime = now;
-           System.out.println("Wave: " + wave); // remove once you have UI for it
-       }
-   }
+        }
+    }
+    enemycreator = false;
+}
+
+// How many columns based on wave and level
+public int getColumnsForWave(int wave)
+{
+    int base = 1 + (wave / 3); // adds a column every 3 waves
+    return Math.min(base + level, 5); // cap at 5 columns, scales with level
+}
+
+// How many rows based on wave and level
+/*public int getRowsForWave(int wave)
+{
+    int base = 3 + (wave / 2); // adds a row every 2 waves
+    return Math.min(base + level, 8); // cap at 8 rows, scales with level
+}*/
+
+public void drawEnemyWaves()
+{
+    for (int i = 0; i < enemies.size(); i++)
+    {
+        enemies.get(i).drawMe(enemies.get(i).getX(), enemies.get(i).getY(), gc);
+    }
+}
+
+public void enemyShooting(long now)
+{
+    // Initialize timer on first frame
+    if (lastEnemyShot == 0) {
+        lastEnemyShot = now;
+        return;
+    }
+
+    long shootInterval = Math.max(1_000_000_000L, 5_000_000_000L - (wave * 100_000_000L) - (level * 200_000_000L));
+
+    for (int i = 0; i < enemies.size(); i++)
+    {
+        if (now - lastEnemyShot >= shootInterval) {
+            enemies.get(i).setShouldShoot(true);
+        }
+        enemies.get(i).doThing(gc);
+    }
+
+    if (now - lastEnemyShot >= shootInterval) {
+        lastEnemyShot = now;
+    }
+}
+public void handleWave(long now)
+{
+       if (lastWaveTime == 0) {
+        lastWaveTime = now;
+        return;
+    }
+    if (now - lastWaveTime >= 7_000_000_000L)
+    {
+        if (wave < getMaxWaves())
+        {
+            wave++;
+            enemycreator = true; // respawn enemies for new wave
+            createEnemies();
+        }
+        else
+        {
+            // All waves done — go to next level
+            level++;
+            wave = 1;
+            enemycreator = true;
+            createEnemies();
+            System.out.println("Level: " + level);
+        }
+        lastWaveTime = now;
+        System.out.println("Wave: " + wave);
+    }
+}
+
+// Easy to change max waves per level
+public int getMaxWaves()
+{
+    return 10; // can make this scale with level later e.g. 10 + level * 2
+}
+public void moveEnemies() {
+    for (Enemy e : enemies) {
+        e.move(e);
+    }
+}
+public void checkCollisions(Player player)
+{
+    for (int i = enemies.size() - 1; i >= 0; i--) // iterate backwards when removing
+    {
+        if (i >= enemies.size()) continue; // safety check
+
+        if (enemies.get(i).checkCollisions(player)) {
+            player.setHealth(player.getHealth() - 5);
+        }
+        if (i < enemies.size() && player.checkCollisions(enemies.get(i))) {
+            enemies.remove(i);
+            continue; // skip remaining checks for this enemy
+        }
+        if (i < enemies.size() && enemies.get(i).getX() < 0) {
+            enemies.remove(i);
+            player.setHealth(player.getHealth() - 1); // penalty for letting enemy pass
+        }
+    }
+}
+public void checkDeath() {
+    if(player.getHealth() <= 0) {
+        alive = false;
+        gameState = "DEATH_SCREEN";
+        player = null;
+        enemies.clear();
+        wave = 1;
+        level = 1;
+    }
+}
 
    public class ComboBoxListener implements EventHandler<ActionEvent>
    {
