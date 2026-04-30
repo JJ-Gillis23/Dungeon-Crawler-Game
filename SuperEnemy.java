@@ -2,11 +2,11 @@ import javafx.scene.paint.*;
 import javafx.scene.canvas.*;
 import javafx.scene.text.Font;
 import java.util.*;
-public class Enemy extends Player {
+public class SuperEnemy extends Enemy {
 
     
     // Public constructor
-    public Enemy() {
+    public SuperEnemy() {
         super();
     }
 
@@ -34,60 +34,59 @@ public class Enemy extends Player {
     public void setHealth(int health) { this.health = health; }
     @Override
     public int getHealth() { return health; }
-    
 
     // Draws the enemy
 @Override
 public void drawMe(int x, int y, GraphicsContext gc) {
-    int radius = size / 2;
+    int scale = 2; // twice the size
+    int radius = (size * scale) / 2;
     int cx = x + radius;
     int cy = y + radius;
 
     // Outer glow effect
     gc.setFill(Color.color(0.5, 0, 0, 0.3));
-    gc.fillOval(x - 5, y - 5, size + 10, size + 10);
+    gc.fillOval(x - 10, y - 10, size * scale + 20, size * scale + 20);
 
     // Main body
     gc.setFill(Color.DARKRED);
-    gc.fillOval(x, y, size, size);
+    gc.fillOval(x, y, size * scale, size * scale);
 
     // Shine highlight
     gc.setFill(Color.color(1, 0.3, 0.3, 0.4));
-    gc.fillOval(x + size/4, y + size/6, size/4, size/5);
+    gc.fillOval(x + (size * scale)/4, y + (size * scale)/6, (size * scale)/4, (size * scale)/5);
 
     // Left eye white
     gc.setFill(Color.WHITE);
-    gc.fillOval(cx - 14, cy - 10, 12, 10);
+    gc.fillOval(cx - 28, cy - 20, 24, 20);
 
     // Right eye white
-    gc.fillOval(cx + 2, cy - 10, 12, 10);
+    gc.fillOval(cx + 4, cy - 20, 24, 20);
 
-    // Left pupil (angry — shifted inward)
+    // Left pupil
     gc.setFill(Color.BLACK);
-    gc.fillOval(cx - 10, cy - 8, 6, 7);
+    gc.fillOval(cx - 20, cy - 16, 12, 14);
 
-    // Right pupil (angry — shifted inward)
-    gc.fillOval(cx + 5, cy - 8, 6, 7);
+    // Right pupil
+    gc.fillOval(cx + 10, cy - 16, 12, 14);
 
     // Angry eyebrows
     gc.setStroke(Color.BLACK);
-    gc.setLineWidth(2);
-    gc.strokeLine(cx - 15, cy - 14, cx - 2, cy - 11); // left brow angled down inward
-    gc.strokeLine(cx + 2, cy - 11, cx + 15, cy - 14); // right brow angled down inward
+    gc.setLineWidth(4);
+    gc.strokeLine(cx - 30, cy - 28, cx - 4, cy - 22);
+    gc.strokeLine(cx + 4, cy - 22, cx + 30, cy - 28);
 
     // Mouth (jagged evil grin)
     gc.setStroke(Color.BLACK);
-    gc.setLineWidth(2);
-    gc.strokeLine(cx - 10, cy + 8, cx - 6, cy + 12);
-    gc.strokeLine(cx - 6, cy + 12, cx - 2, cy + 8);
-    gc.strokeLine(cx - 2, cy + 8, cx + 2, cy + 12);
-    gc.strokeLine(cx + 2, cy + 12, cx + 6, cy + 8);
-    gc.strokeLine(cx + 6, cy + 8, cx + 10, cy + 12);
+    gc.setLineWidth(4);
+    gc.strokeLine(cx - 20, cy + 16, cx - 12, cy + 24);
+    gc.strokeLine(cx - 12, cy + 24, cx - 4, cy + 16);
+    gc.strokeLine(cx - 4, cy + 16, cx + 4, cy + 24);
+    gc.strokeLine(cx + 4, cy + 24, cx + 12, cy + 16);
+    gc.strokeLine(cx + 12, cy + 16, cx + 20, cy + 24);
 }
 
 //Bullet action
-protected boolean shouldShoot = false;
-protected List<int[]> bullets = new ArrayList<>(); // each int[] is {x, y}
+private List<int[]> bullets = new ArrayList<>();
 
 @Override
 public void doThing(GraphicsContext gc) {

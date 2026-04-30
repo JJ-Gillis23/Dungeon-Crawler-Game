@@ -53,6 +53,16 @@ public void drawMe(int x, int y, GraphicsContext gc) {
     gc.setFill(Color.PEACHPUFF);
     gc.fillOval(x + 6, y + 4, 18, 18);
 
+    // Eyes
+    gc.setFill(Color.WHITE);
+    gc.fillOval(x + 9, y + 8, 5, 4);
+    gc.fillOval(x + 16, y + 8, 5, 4);
+
+    // Pupils
+    gc.setFill(Color.BLACK);
+    gc.fillOval(x + 11, y + 9, 2, 2);
+    gc.fillOval(x + 18, y + 9, 2, 2);
+
     // Legs
     gc.setFill(Color.BROWN);
     gc.fillRect(x + 8, y + 38, 5, 12);
@@ -84,12 +94,11 @@ public void drawMe(int x, int y, GraphicsContext gc) {
     gc.fillRect(x + 4, y + 2, 22, 5);
     gc.fillRect(x + 8, y - 4, 14, 8);
 
-    //Username
+    // Username
     gc.setFill(Color.WHITE);
     gc.setFont(Font.font("Orbitron", FontWeight.BOLD, 12));
     gc.fillText(name, x, y - 10);
 }
-
     // Archery action
 private int arrowX = -1; // -1 means no arrow in flight
 private int arrowY = -1;

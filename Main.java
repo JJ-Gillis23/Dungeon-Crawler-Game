@@ -17,10 +17,13 @@ import java.util.*;
 public class Main extends Application
 {
    boolean up, down, left, right, action;
+   boolean bossSpawnedThisLevel = false;
    boolean enemycreator = true;
    boolean alive = true;
+   boolean bossactive = false;
    int wave = 1;
-   int level = 1;
+   int level = 3;
+   int score = 0;
    long lastWaveTime = 0;
    long lastEnemyShot = 0;
    String gameState = "MAIN_MENU"; // MAIN_MENU, CLASS_MENU, GAME
@@ -65,7 +68,6 @@ public class Main extends Application
          e -> {
             gameState = "CLASS_MENU";
             startButton.setVisible(false);
-            username.setVisible(true);
          });
    
       // Archer button starts the game
@@ -205,6 +207,7 @@ public class Main extends Application
       gc.setFill(Color.WHITE);
       gc.setFont(Font.font("Arial", FontWeight.BOLD, 24));
       gc.fillText("Please Enter a Username:", 300, 625);
+      username.setVisible(true);
       username.setTranslateX(30);  // move left/right
       username.setTranslateY(230);  // move up/down
       username.setMaxWidth(200);
@@ -232,6 +235,7 @@ public class Main extends Application
       gc.setFill(Color.WHITE);
       gc.setFont(Font.font("Orbitron", FontWeight.BOLD, 18));
       gc.fillText("Level: " + level, 10, 40);
+      gc.fillText("Score: " + score, 110, 40); // display score
 
       // White border
       gc.setFill(Color.WHITE);
@@ -290,11 +294,11 @@ public class Main extends Application
          }
          else if (gameState.equals("GAME"))
          {
-            player.setName(name);
             drawBackground();
             checkDeath();
             if (player != null)
             {
+               player.setName(name);
                player.drawMe(player.getX(), player.getY(), gc);
                drawHud();
             
@@ -316,9 +320,12 @@ public class Main extends Application
                if (left)  player.setX(player.getX() - 5);
                if (right) player.setX(player.getX() + 5);
 
-               if (enemycreator)
+               if (enemycreator && !(level % 3 == 0)) // don't spawn normal enemies on boss levels
                {
                   createEnemies();
+               }
+               else if (level % 3 == 0 && !bossactive && !bossSpawnedThisLevel) {
+                  createBoss();
                }
                handleWave(now);
                drawEnemyWaves();
@@ -384,11 +391,43 @@ public void createEnemies()
             e.setX(1000 + col * 100);
             e.setY(100 + row * 100);
             e.setSize(50);
+            e.setHealth(25); // scale health with level (optional)
             enemies.add(e);
         }
     }
     enemycreator = false;
 }
+public void createBoss()
+{
+    enemies.clear();
+
+    // Boss position
+    int bossX = 1250;
+    int bossY = 334;
+
+    // 5 columns of guards in front of boss, 6 rows — same as createEnemies
+    for (int col = 0; col < 5; col++) {
+        for (int row = 0; row < 6; row++) {
+            Enemy guard = new Enemy();
+            guard.setX(bossX - 350 + (col * 100)); // same 100px column spacing
+            guard.setY(100 + (row * 100));           // same 100px row spacing
+            guard.setSize(50);
+            guard.setHealth(25);
+            enemies.add(guard);
+        }
+    }
+
+    // Boss behind the wall, vertically centered
+    SuperEnemy boss = new SuperEnemy();
+    boss.setX(bossX);
+    boss.setY(bossY);
+    boss.setSize(80);
+    boss.setHealth(50);
+    enemies.add(boss);
+    bossactive = true;
+    bossSpawnedThisLevel = true;
+}
+
 
 // How many columns based on wave and level
 public int getColumnsForWave(int wave)
@@ -440,6 +479,18 @@ public void handleWave(long now)
         lastWaveTime = now;
         return;
     }
+        // Boss level — advance when all enemies are dead
+    if (level % 3 == 0 && bossSpawnedThisLevel && enemies.isEmpty()) {
+        level++;
+        player.setHealth(100);
+        wave = 1;
+        enemycreator = true;
+        bossSpawnedThisLevel = false;
+        bossactive = false;
+        lastWaveTime = now;
+        System.out.println("Boss defeated! Level: " + level);
+        return;
+    }
     if (now - lastWaveTime >= 7_000_000_000L)
     {
         if (wave < getMaxWaves())
@@ -455,6 +506,7 @@ public void handleWave(long now)
             player.setHealth(100); // restore health on level up
             wave = 1;
             enemycreator = true;
+            bossSpawnedThisLevel = false; // reset boss spawn flag for new level
             createEnemies();
             System.out.println("Level: " + level);
         }
@@ -482,14 +534,33 @@ public void checkCollisions(Player player)
         if (enemies.get(i).checkCollisions(player)) {
             player.setHealth(player.getHealth() - 5);
         }
-        if (i < enemies.size() && player.checkCollisions(enemies.get(i))) {
-            enemies.remove(i);
-            continue; // skip remaining checks for this enemy
+         if (i < enemies.size() && player.checkCollisions(enemies.get(i))) {
+            enemies.get(i).setHealth(enemies.get(i).getHealth() - 25);
+            System.out.println("Enemy health: " + enemies.get(i).getHealth()); // debug
+            if (enemies.get(i).getHealth() <= 0) {
+               boolean isBoss = enemies.get(i) instanceof SuperEnemy; // ✅ check BEFORE remove
+               enemies.remove(i);
+               if (isBoss) {
+                     bossactive = false;
+                     score += 50;
+               } else {
+                     score += 25;
+               }
+            }
+            continue;
+         }
+        if (i < enemies.size() && enemies.get(i).getX() < 0) { 
+         // mark as "dead" to remove in next loop
+         boolean isBoss = enemies.get(i) instanceof SuperEnemy;
+         enemies.remove(i);
+         if (isBoss) {
+            bossactive = false;
+            player.setHealth(player.getHealth() - 20); // penalty for letting enemy pass
         }
-        if (i < enemies.size() && enemies.get(i).getX() < 0) {
-            enemies.remove(i);
-            player.setHealth(player.getHealth() - 1); // penalty for letting enemy pass
+        else {
+            player.setHealth(player.getHealth() - 1); // bigger penalty for letting regular enemy pass
         }
+      }
     }
 }
 public void checkDeath() {
