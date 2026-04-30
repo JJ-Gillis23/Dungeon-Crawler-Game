@@ -24,6 +24,7 @@ public class Main extends Application
    long lastWaveTime = 0;
    long lastEnemyShot = 0;
    String gameState = "MAIN_MENU"; // MAIN_MENU, CLASS_MENU, GAME
+   String name;
 
    ComboBox<String> menu = new ComboBox<>();
    StackPane sp = new StackPane();
@@ -34,6 +35,8 @@ public class Main extends Application
    Button archerButton = new Button("Archer Class");
    Button ninjaButton = new Button("Ninja Class");
    Button restartButton = new Button("Restart Game");
+   Label label1 = new Label("Name:");
+   TextField username = new TextField ();
    Player player = null;
    ArrayList<Enemy> enemies = new ArrayList<>();
    AnimationHandler ta = new AnimationHandler();
@@ -46,6 +49,7 @@ public class Main extends Application
       sp.getChildren().add(archerButton);
       sp.getChildren().add(ninjaButton);
       sp.getChildren().add(restartButton);
+      sp.getChildren().add(username);
    
       menu.getItems().addAll("Save", "Load", "Reset", "Exit");
       menu.setOnAction(new ComboBoxListener());
@@ -53,6 +57,7 @@ public class Main extends Application
       archerButton.setVisible(false);
       ninjaButton.setVisible(false);
       restartButton.setVisible(false);
+      username.setVisible(false);
       
    
       // Start button goes to class menu
@@ -60,6 +65,7 @@ public class Main extends Application
          e -> {
             gameState = "CLASS_MENU";
             startButton.setVisible(false);
+            username.setVisible(true);
          });
    
       // Archer button starts the game
@@ -71,6 +77,7 @@ public class Main extends Application
             gameState = "GAME";
             archerButton.setVisible(false);
             ninjaButton.setVisible(false);
+            username.setVisible(false);
          });
       //Ninja button starts the game
       ninjaButton.setOnAction(
@@ -81,6 +88,7 @@ public class Main extends Application
             gameState = "GAME";
             ninjaButton.setVisible(false);
             archerButton.setVisible(false);
+            username.setVisible(false);
          });
       
    
@@ -193,7 +201,24 @@ public class Main extends Application
       archerButton.setTranslateY(100);    // negative = up, positive = down
       ninjaButton.setFont(Font.font("Arial", FontWeight.BOLD, 24));
       ninjaButton.setTranslateX(200); // negative = left, positive = right
-      ninjaButton.setTranslateY(100);    // negative = up, positive = down         
+      ninjaButton.setTranslateY(100);    // negative = up, positive = down 
+      gc.setFill(Color.WHITE);
+      gc.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+      gc.fillText("Please Enter a Username:", 300, 625);
+      username.setTranslateX(30);  // move left/right
+      username.setTranslateY(230);  // move up/down
+      username.setMaxWidth(200);
+      username.setMaxHeight(30);
+      username.setFont(Font.font("Arial", 28)); // smaller font    
+      username.setOnKeyPressed(e -> {
+         if (e.getCode() == KeyCode.ENTER) {
+           name = username.getText().trim();
+            if (!name.isEmpty()) {
+               username.setVisible(false);
+               sp.requestFocus();
+            }
+         }
+      });    
    }
    public void drawHud()
    {
@@ -259,11 +284,13 @@ public class Main extends Application
             drawMainMenu();
          }
          else if (gameState.equals("CLASS_MENU"))
-         {
+         {  
+
             drawClassMenu();
          }
          else if (gameState.equals("GAME"))
          {
+            player.setName(name);
             drawBackground();
             checkDeath();
             if (player != null)
@@ -277,7 +304,12 @@ public class Main extends Application
                   action = false;
                }
             
-               player.doThing(gc);
+               if(level >= 3) {
+                  player.upgradeddoThing(gc);
+               }
+               else {
+                  player.doThing(gc);
+               }
             
                if (up)    player.setY(player.getY() - 5);
                if (down)  player.setY(player.getY() + 5);
@@ -420,6 +452,7 @@ public void handleWave(long now)
         {
             // All waves done — go to next level
             level++;
+            player.setHealth(100); // restore health on level up
             wave = 1;
             enemycreator = true;
             createEnemies();
@@ -433,7 +466,7 @@ public void handleWave(long now)
 // Easy to change max waves per level
 public int getMaxWaves()
 {
-    return 10; // can make this scale with level later e.g. 10 + level * 2
+    return 5 + level *2;
 }
 public void moveEnemies() {
     for (Enemy e : enemies) {

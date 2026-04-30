@@ -3,13 +3,15 @@ import javafx.scene.canvas.*;
 import javafx.scene.text.Font;
 public abstract class Player {
     protected int x, y, size, health; // protected so subclasses can access
+    protected String name; // player's name
 
     public Player() {
-        x = 0; y = 0; size = 25; health = 100;
+        x = 0; y = 0; size = 35; health = 100; name = "Player";
     }
 
     public abstract void drawMe(int x, int y, GraphicsContext gc);
     public abstract void doThing(GraphicsContext gc);
+    public abstract void upgradeddoThing(GraphicsContext gc);
     public abstract void setShouldShoot(boolean b);
     public abstract boolean checkCollisions(Player player);
 
@@ -22,4 +24,6 @@ public abstract class Player {
     public void setSize(int size) { this.size = size; }
     public int getHealth() { return health; }
     public void setHealth(int health) { this.health = health; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 }

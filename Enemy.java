@@ -33,16 +33,56 @@ public class Enemy extends Player {
     @Override
     public void setSize(int size) { this.size = size; }
 
-    // Draws the archer
-    @Override
-    public void drawMe(int x, int y, GraphicsContext gc) {
-        gc.setFill(Color.GREEN);
-        gc.fillRect(x, y, size, size);
-    }
+    // Draws the enemy
+@Override
+public void drawMe(int x, int y, GraphicsContext gc) {
+    int radius = size / 2;
+    int cx = x + radius;
+    int cy = y + radius;
 
-    // Archery action
-private int arrowX = -1; // -1 means no arrow in flight
-private int arrowY = -1;
+    // Outer glow effect
+    gc.setFill(Color.color(0.5, 0, 0, 0.3));
+    gc.fillOval(x - 5, y - 5, size + 10, size + 10);
+
+    // Main body
+    gc.setFill(Color.DARKRED);
+    gc.fillOval(x, y, size, size);
+
+    // Shine highlight
+    gc.setFill(Color.color(1, 0.3, 0.3, 0.4));
+    gc.fillOval(x + size/4, y + size/6, size/4, size/5);
+
+    // Left eye white
+    gc.setFill(Color.WHITE);
+    gc.fillOval(cx - 14, cy - 10, 12, 10);
+
+    // Right eye white
+    gc.fillOval(cx + 2, cy - 10, 12, 10);
+
+    // Left pupil (angry — shifted inward)
+    gc.setFill(Color.BLACK);
+    gc.fillOval(cx - 10, cy - 8, 6, 7);
+
+    // Right pupil (angry — shifted inward)
+    gc.fillOval(cx + 5, cy - 8, 6, 7);
+
+    // Angry eyebrows
+    gc.setStroke(Color.BLACK);
+    gc.setLineWidth(2);
+    gc.strokeLine(cx - 15, cy - 14, cx - 2, cy - 11); // left brow angled down inward
+    gc.strokeLine(cx + 2, cy - 11, cx + 15, cy - 14); // right brow angled down inward
+
+    // Mouth (jagged evil grin)
+    gc.setStroke(Color.BLACK);
+    gc.setLineWidth(2);
+    gc.strokeLine(cx - 10, cy + 8, cx - 6, cy + 12);
+    gc.strokeLine(cx - 6, cy + 12, cx - 2, cy + 8);
+    gc.strokeLine(cx - 2, cy + 8, cx + 2, cy + 12);
+    gc.strokeLine(cx + 2, cy + 12, cx + 6, cy + 8);
+    gc.strokeLine(cx + 6, cy + 8, cx + 10, cy + 12);
+}
+
+//Bullet action
 private boolean shouldShoot = false;
 private List<int[]> bullets = new ArrayList<>(); // each int[] is {x, y}
 
@@ -51,6 +91,47 @@ public void doThing(GraphicsContext gc) {
     // Launch a new bullet if triggered
     if (bulletcount > 0 && shouldShoot) {
         bullets.add(new int[]{getX(), getY() + getSize() / 2}); // spawn at left edge of enemy
+        bulletcount--;
+        shouldShoot = false;
+    }
+
+    // Move and draw all bullets every frame
+    Iterator<int[]> it = bullets.iterator();
+    while (it.hasNext()) {
+        int[] bullet = it.next();
+        bullet[0] -= 15; // move LEFT instead of right
+
+        int ax = bullet[0];
+        int ay = bullet[1];
+
+        // Bullet body (small rectangle)
+        gc.setFill(Color.YELLOW);
+        gc.fillRect(ax, ay - 4, 16, 8); // wide rectangle for bullet body
+
+        // Bullet tip (triangle pointing LEFT)
+        gc.setFill(Color.ORANGE);
+        double[] tipX = {ax, ax - 10, ax};
+        double[] tipY = {ay - 4, ay, ay + 4};
+        gc.fillPolygon(tipX, tipY, 3);
+
+        // Bullet casing rim (right edge detail)
+        gc.setStroke(Color.DARKGRAY);
+        gc.setLineWidth(2);
+        gc.strokeLine(ax + 16, ay - 4, ax + 16, ay + 4);
+
+        // Remove when off the left edge of screen
+        if (bullet[0] < -20) {
+            it.remove();
+        }
+    }
+}
+@Override
+public void upgradeddoThing(GraphicsContext gc) {
+    // Launch a new bullet if triggered
+    if (bulletcount > 0 && shouldShoot) {
+        bullets.add(new int[]{getX(), getY() + getSize() / 2}); // spawn at left edge of enemy
+        bullets.add(new int[]{getX(), getY() + getSize() / 2 - 20}); // spawn above the enemy
+        bullets.add(new int[]{getX(), getY() + getSize() / 2 + 20}); // spawn below the enemy
         bulletcount--;
         shouldShoot = false;
     }
