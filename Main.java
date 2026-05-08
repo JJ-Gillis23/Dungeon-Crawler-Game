@@ -22,7 +22,7 @@ public class Main extends Application
    boolean alive = true;
    boolean bossactive = false;
    int wave = 1;
-   int level = 3;
+   int level = 1;
    int score = 0;
    long lastWaveTime = 0;
    long lastEnemyShot = 0;
@@ -34,6 +34,7 @@ public class Main extends Application
    Canvas theCanvas = new Canvas(1368,768);
    GraphicsContext gc = theCanvas.getGraphicsContext2D(); 
    Image menuBackground = new Image("mainmenu.png");
+   Image gameBackground = new Image("background.png");
    Button startButton = new Button("Start Game");
    Button archerButton = new Button("Archer Class");
    Button ninjaButton = new Button("Ninja Class");
@@ -274,8 +275,8 @@ public class Main extends Application
    }
    public void drawBackground()
    {
-      gc.setFill(Color.BLACK);
-      gc.fillRect(0, 0, theCanvas.getWidth(), theCanvas.getHeight());   
+      gc.clearRect(0, 0, theCanvas.getWidth(), theCanvas.getHeight());
+      gc.drawImage(gameBackground, 0, 0, theCanvas.getWidth(), theCanvas.getHeight());   
    }
 
    public class AnimationHandler extends AnimationTimer
@@ -511,7 +512,6 @@ public void handleWave(long now)
             System.out.println("Level: " + level);
         }
         lastWaveTime = now;
-        System.out.println("Wave: " + wave);
     }
 }
 
@@ -536,9 +536,8 @@ public void checkCollisions(Player player)
         }
          if (i < enemies.size() && player.checkCollisions(enemies.get(i))) {
             enemies.get(i).setHealth(enemies.get(i).getHealth() - 25);
-            System.out.println("Enemy health: " + enemies.get(i).getHealth()); // debug
             if (enemies.get(i).getHealth() <= 0) {
-               boolean isBoss = enemies.get(i) instanceof SuperEnemy; // ✅ check BEFORE remove
+               boolean isBoss = enemies.get(i) instanceof SuperEnemy;
                enemies.remove(i);
                if (isBoss) {
                      bossactive = false;
@@ -592,6 +591,14 @@ public void checkDeath() {
                break;
             case "Reset":
                gameState = "MAIN_MENU";
+            // All waves done — go to next level
+            level = 1;
+            player.setHealth(100); // restore health on level up
+            wave = 1;
+            enemycreator = true;
+            bossSpawnedThisLevel = false; // reset boss spawn flag for new level
+            createEnemies();
+               
                break;
             case "Exit":
                System.exit(0);

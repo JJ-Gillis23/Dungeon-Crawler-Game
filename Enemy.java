@@ -179,7 +179,6 @@ public boolean checkCollisions(Player player) {
             ay - 4 < player.getY() + player.getSize() &&
             ay + 4 > player.getY()) {
             // Collision detected
-            System.out.println("Player hit!");
             it.remove(); // Remove bullet on hit
             return true; // Collision detected
         }
